@@ -1,12 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchIssues, fetchStats } from '../api';
+import { fetchIssues, fetchStats, adminLogin } from '../api';
 import StatsBar from '../components/StatsBar';
 import IssueMap from '../components/IssueMap';
 import IssueTable from '../components/IssueTable';
 import IssueDetailsModal from '../components/IssueDetailsModal';
 
 function AdminDashboard() {
+  const [token, setToken] = useState(localStorage.getItem('civiclens_admin_token') || '');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  
   const [issues, setIssues] = useState([]);
   const [stats, setStats] = useState(null);
   
@@ -18,7 +22,27 @@ function AdminDashboard() {
   const [selectedIssueId, setSelectedIssueId] = useState(null);
   const selectedIssue = issues.find(i => i.id === selectedIssueId) || null;
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    try {
+      const res = await adminLogin(password);
+      localStorage.setItem('civiclens_admin_token', res.token);
+      setToken(res.token);
+    } catch (err) {
+      setLoginError('Invalid password');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('civiclens_admin_token');
+    setToken('');
+    setIssues([]);
+    setStats(null);
+  };
+
   const loadData = useCallback(async () => {
+    if (!token) return;
     try {
       const [issueData, statsData] = await Promise.all([
         fetchIssues(),
@@ -27,15 +51,50 @@ function AdminDashboard() {
       setIssues(issueData);
       setStats(statsData);
     } catch (err) {
+      if (err.response?.status === 401) {
+        handleLogout();
+      }
       console.error('Failed to load dashboard data', err);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 10000);
-    return () => clearInterval(interval);
-  }, [loadData]);
+    if (token) {
+      loadData();
+      const interval = setInterval(loadData, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [token, loadData]);
+
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="card max-w-sm w-full p-6 space-y-6">
+          <div className="text-center">
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight">CivicLens Admin</h1>
+            <p className="text-sm text-gray-500 mt-1">Enter your password to access the dashboard.</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                className="input-field"
+                placeholder="Admin password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+              />
+            </div>
+            {loginError && <p className="text-sm text-red-600">{loginError}</p>}
+            <button type="submit" className="btn-primary w-full">Login</button>
+          </form>
+          <div className="text-center">
+            <Link to="/" className="text-sm text-gray-500 hover:underline">← Back to public report form</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Client-side filtering
   const filteredIssues = issues.filter(issue => {
@@ -64,7 +123,10 @@ function AdminDashboard() {
               <span className="text-[10px] text-gray-500 hidden sm:block">Monitor, prioritize and resolve reported civic infrastructure issues.</span>
             </div>
           </div>
-          <Link to="/" className="text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors">Submit Report</Link>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors">Submit Report</Link>
+            <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-gray-900">Logout</button>
+          </div>
         </div>
       </div>
       

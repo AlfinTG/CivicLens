@@ -103,7 +103,8 @@ def analyze_image(image_bytes: bytes, mime_type: str) -> dict:
     try:
         result = _call_gemini(image_bytes, mime_type, prompt)
         return _validate(result)
-    except Exception:
+    except Exception as e:
+        print(f"VISION API ERROR: {e}")
         pass
 
     # Level 2: SHA-256 cache

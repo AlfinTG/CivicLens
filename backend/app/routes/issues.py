@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import Issue
 from app.schemas import IssueOut, StatusPatch, StatsOut
+from app.routes.auth import require_admin
 
 router = APIRouter()
 
@@ -19,7 +20,7 @@ def health():
 
 
 @router.get("/api/stats", response_model=StatsOut)
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(db: Session = Depends(get_db), _=Depends(require_admin)):
     total = db.query(func.count(Issue.id)).scalar()
     open_count = db.query(func.count(Issue.id)).filter(Issue.status == "open").scalar()
     in_progress = db.query(func.count(Issue.id)).filter(Issue.status == "in_progress").scalar()
@@ -38,7 +39,7 @@ def get_stats(db: Session = Depends(get_db)):
 
 
 @router.get("/api/issues", response_model=list[IssueOut])
-def list_issues(status: Optional[str] = None, db: Session = Depends(get_db)):
+def list_issues(status: Optional[str] = None, db: Session = Depends(get_db), _=Depends(require_admin)):
     query = db.query(Issue)
     if status:
         if status not in VALID_STATUSES:
@@ -56,7 +57,7 @@ def list_issues(status: Optional[str] = None, db: Session = Depends(get_db)):
 
 
 @router.get("/api/issues/{issue_id}", response_model=IssueOut)
-def get_issue(issue_id: int, db: Session = Depends(get_db)):
+def get_issue(issue_id: int, db: Session = Depends(get_db), _=Depends(require_admin)):
     issue = db.query(Issue).filter(Issue.id == issue_id).first()
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
@@ -64,7 +65,7 @@ def get_issue(issue_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/api/issues/{issue_id}", response_model=IssueOut)
-def update_status(issue_id: int, body: StatusPatch, db: Session = Depends(get_db)):
+def update_status(issue_id: int, body: StatusPatch, db: Session = Depends(get_db), _=Depends(require_admin)):
     if body.status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail=f"Invalid status. Use: {', '.join(VALID_STATUSES)}")
     issue = db.query(Issue).filter(Issue.id == issue_id).first()

@@ -38,3 +38,11 @@ class StatsOut(BaseModel):
     in_progress: int
     resolved: int
     by_type: dict[str, int]
+
+
+class AdminLogin(BaseModel):
+    password: str
+
+
+class AdminLoginResponse(BaseModel):
+    token: str
