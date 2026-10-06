@@ -8,6 +8,19 @@ const http = axios.create({
   timeout: 15000,
 });
 
+http.interceptors.request.use((config) => {
+  const token = localStorage.getItem('civiclens_admin_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export async function adminLogin(password) {
+  const res = await http.post('/api/admin/login', { password });
+  return res.data;
+}
+
 export async function submitReport(formData) {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 1000));
