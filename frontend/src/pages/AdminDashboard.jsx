@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchIssues, fetchStats, adminLogin } from '../api';
+import { fetchIssues, fetchStats, adminLogin, updateIssue } from '../api';
 import StatsBar from '../components/StatsBar';
 import IssueMap from '../components/IssueMap';
 import IssueTable from '../components/IssueTable';
@@ -15,6 +15,12 @@ function AdminDashboard() {
   const [issues, setIssues] = useState([]);
   const [stats, setStats] = useState(null);
   const [selectedIssue, setSelectedIssue] = useState(null);
+
+  // Filter & Sort States
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [deptFilter, setDeptFilter] = useState('All Departments');
+  const [sortBy, setSortBy] = useState('Highest Priority');
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -49,18 +55,23 @@ function AdminDashboard() {
       setIssues(issueData);
       setStats(statsData);
       
-      // Update selected issue if it was refreshed
-      if (selectedIssue) {
-        const updated = issueData.find(i => i.id === selectedIssue.id);
-        if (updated) setSelectedIssue(updated);
-      }
+      // Update selected issue safely without triggering loops
+      setSelectedIssue(prev => {
+        if (!prev) return prev;
+        const updated = issueData.find(i => i.id === prev.id);
+        // Only return a new reference if the data actually changed
+        if (updated && JSON.stringify(updated) !== JSON.stringify(prev)) {
+          return updated;
+        }
+        return prev;
+      });
     } catch (err) {
       if (err.response?.status === 401) {
         handleLogout();
       }
       console.error('Failed to load dashboard data', err);
     }
-  }, [token, selectedIssue]);
+  }, [token]); // removed selectedIssue from deps to stop re-triggering intervals!
 
   useEffect(() => {
     if (token) {
@@ -69,6 +80,83 @@ function AdminDashboard() {
       return () => clearInterval(interval);
     }
   }, [token, loadData]);
+
+  const filteredIssues = useMemo(() => {
+    let filtered = issues;
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(i => 
+        i.type.toLowerCase().includes(term) ||
+        i.description.toLowerCase().includes(term) ||
+        i.department.toLowerCase().includes(term) ||
+        i.status.toLowerCase().includes(term) ||
+        (i.note && i.note.toLowerCase().includes(term)) ||
+        i.id.toString().includes(term)
+      );
+    }
+    
+    if (statusFilter !== 'All Statuses') {
+      const statusMap = {
+        'Reported': 'open',
+        'Assigned': 'assigned',
+        'In Progress': 'in_progress',
+        'Resolved': 'resolved'
+      };
+      const mappedStatus = statusMap[statusFilter];
+      if (mappedStatus) {
+        filtered = filtered.filter(i => i.status === mappedStatus);
+      }
+    }
+    
+    if (deptFilter !== 'All Departments') {
+      if (deptFilter === 'Unassigned') {
+         filtered = filtered.filter(i => !i.department || i.department === 'General');
+      } else {
+         filtered = filtered.filter(i => i.department === deptFilter);
+      }
+    }
+    
+    // Sorting
+    filtered = [...filtered]; 
+    filtered.sort((a, b) => {
+       if (sortBy === 'Newest') return new Date(b.created_at) - new Date(a.created_at);
+       if (sortBy === 'Oldest') return new Date(a.created_at) - new Date(b.created_at);
+       if (sortBy === 'Highest Priority') return b.priority_score - a.priority_score;
+       if (sortBy === 'Lowest Priority') return a.priority_score - b.priority_score;
+       if (sortBy === 'Highest Severity') return b.severity - a.severity;
+       if (sortBy === 'Lowest Severity') return a.severity - b.severity;
+       return 0;
+    });
+    
+    return filtered;
+  }, [issues, searchTerm, statusFilter, deptFilter, sortBy]);
+
+  // Cleanly close details if the selected issue is filtered out
+  const isSelectedFilteredOut = selectedIssue && !filteredIssues.find(i => i.id === selectedIssue.id);
+  useEffect(() => {
+    if (isSelectedFilteredOut) setSelectedIssue(null);
+  }, [isSelectedFilteredOut]);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('All Statuses');
+    setDeptFilter('All Departments');
+    setSortBy('Highest Priority');
+  };
+
+  const hasActiveFilters = searchTerm !== '' || statusFilter !== 'All Statuses' || deptFilter !== 'All Departments' || sortBy !== 'Highest Priority';
+
+  const handleModalStatusChange = async (newStatus) => {
+    if (!selectedIssue) return;
+    try {
+      const updated = await updateIssue(selectedIssue.id, { status: newStatus });
+      setSelectedIssue(updated);
+      loadData();
+    } catch (err) {
+      console.error('Failed to update status', err);
+    }
+  };
 
   if (!token) {
     return (
@@ -126,7 +214,7 @@ function AdminDashboard() {
         </div>
       </div>
       
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 w-full flex-1">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 w-full flex-1">
         
         {/* Overview Section */}
         <div>
@@ -144,6 +232,48 @@ function AdminDashboard() {
           )}
         </div>
 
+        {/* Toolbar */}
+        <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row gap-3 items-center justify-between">
+          <div className="flex-1 w-full md:max-w-md relative">
+            <input 
+              type="text" 
+              placeholder="Search issues..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full text-sm border-gray-300 rounded-md pl-10 py-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="text-sm border-gray-300 rounded-md py-2 focus:ring-blue-500 focus:border-blue-500">
+              <option>All Statuses</option>
+              <option>Reported</option>
+              <option>Assigned</option>
+              <option>In Progress</option>
+              <option>Resolved</option>
+            </select>
+            <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)} className="text-sm border-gray-300 rounded-md py-2 focus:ring-blue-500 focus:border-blue-500">
+              <option>All Departments</option>
+              <option>Roads & Public Works</option>
+              <option>Electricity Board</option>
+              <option>Water & Drainage</option>
+              <option>Sanitation</option>
+              <option>Unassigned</option>
+            </select>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="text-sm border-gray-300 rounded-md py-2 focus:ring-blue-500 focus:border-blue-500">
+              <option>Newest</option>
+              <option>Oldest</option>
+              <option>Highest Priority</option>
+              <option>Lowest Priority</option>
+              <option>Highest Severity</option>
+              <option>Lowest Severity</option>
+            </select>
+            {hasActiveFilters && (
+              <button onClick={clearFilters} className="text-sm text-gray-500 hover:text-gray-900 px-2 font-medium">Clear filters</button>
+            )}
+          </div>
+        </div>
+
         {/* Workspaces */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-3 flex flex-col space-y-3">
@@ -156,17 +286,22 @@ function AdminDashboard() {
               </div>
             </div>
             <div className="card flex-1 shadow-sm overflow-hidden relative" style={{ minHeight: '500px' }}>
-              <IssueMap issues={issues} onIssueClick={setSelectedIssue} />
+              <IssueMap issues={filteredIssues} onIssueClick={setSelectedIssue} />
             </div>
           </div>
           
           <div className="lg:col-span-2 flex flex-col space-y-3">
-            <div>
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Priority Queue</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Highest-priority issues requiring attention.</p>
+            <div className="flex items-end justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Priority Queue</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Highest-priority issues requiring attention.</p>
+              </div>
+              <span className="text-xs font-medium text-gray-500 pb-0.5">
+                Showing {filteredIssues.length} of {issues.length} issues
+              </span>
             </div>
             <div className="card shadow-sm overflow-hidden flex-1 flex flex-col bg-white">
-              <IssueTable issues={issues} onRefresh={loadData} onIssueClick={setSelectedIssue} />
+              <IssueTable issues={filteredIssues} onRefresh={loadData} onIssueClick={setSelectedIssue} />
             </div>
           </div>
         </div>
@@ -185,7 +320,7 @@ function AdminDashboard() {
             </div>
             <div className="overflow-y-auto flex-1 p-6 space-y-6">
               {selectedIssue.image_url ? (
-                <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center min-h-[200px]">
                   <img src={selectedIssue.image_url} alt="Reported issue" className="w-full max-h-[400px] object-contain" />
                 </div>
               ) : (
@@ -200,12 +335,27 @@ function AdminDashboard() {
                   <p className="text-sm font-semibold text-gray-900 capitalize">{selectedIssue.type.replace(/_/g, ' ')}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Status</p>
-                  <StatusBadge status={selectedIssue.status} />
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Status action</p>
+                  <select
+                    value={selectedIssue.status}
+                    onChange={(e) => handleModalStatusChange(e.target.value)}
+                    className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-700 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="open">Reported</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Department</p>
-                  <p className="text-sm text-gray-700 font-medium">{selectedIssue.department}</p>
+                  <p className="text-sm text-gray-700 font-medium">
+                    {(!selectedIssue.department || selectedIssue.department === "General") ? (
+                      <span className="text-amber-600 italic">Unassigned</span>
+                    ) : (
+                      selectedIssue.department
+                    )}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Severity & Priority</p>

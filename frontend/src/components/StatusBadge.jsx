@@ -1,11 +1,13 @@
 const STATUS_STYLES = {
   open: 'bg-gray-100 text-gray-800 border-gray-300',
+  assigned: 'bg-blue-100 text-blue-800 border-blue-300',
   in_progress: 'bg-amber-100 text-amber-800 border-amber-300',
   resolved: 'bg-green-100 text-green-800 border-green-300',
 };
 
 const STATUS_LABELS = {
-  open: 'Open',
+  open: 'Reported',
+  assigned: 'Assigned',
   in_progress: 'In Progress',
   resolved: 'Resolved',
 };

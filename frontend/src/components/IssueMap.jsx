@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -13,27 +13,32 @@ const SEVERITY_COLORS = {
 // Component to handle dynamic map bounds when issues change
 function MapBoundsController({ issues }) {
   const map = useMap();
+  const prevIds = useRef('');
   
   useEffect(() => {
     if (issues && issues.length > 0) {
       const validIssues = issues.filter(i => i.lat != null && i.lng != null);
       if (validIssues.length > 0) {
-        const lats = validIssues.map(i => i.lat);
-        const lngs = validIssues.map(i => i.lng);
-        
-        const minLat = Math.min(...lats);
-        const maxLat = Math.max(...lats);
-        const minLng = Math.min(...lngs);
-        const maxLng = Math.max(...lngs);
-        
-        // Add a small padding to bounds
-        const padLat = (maxLat - minLat) * 0.1 || 0.01;
-        const padLng = (maxLng - minLng) * 0.1 || 0.01;
-        
-        map.fitBounds([
-          [minLat - padLat, minLng - padLng],
-          [maxLat + padLat, maxLng + padLng]
-        ], { maxZoom: 16 });
+        const currentIds = validIssues.map(i => i.id).sort().join(',');
+        if (currentIds !== prevIds.current) {
+          prevIds.current = currentIds;
+          const lats = validIssues.map(i => i.lat);
+          const lngs = validIssues.map(i => i.lng);
+          
+          const minLat = Math.min(...lats);
+          const maxLat = Math.max(...lats);
+          const minLng = Math.min(...lngs);
+          const maxLng = Math.max(...lngs);
+          
+          // Add a small padding to bounds
+          const padLat = (maxLat - minLat) * 0.1 || 0.01;
+          const padLng = (maxLng - minLng) * 0.1 || 0.01;
+          
+          map.fitBounds([
+            [minLat - padLat, minLng - padLng],
+            [maxLat + padLat, maxLng + padLng]
+          ], { maxZoom: 16 });
+        }
       }
     }
   }, [issues, map]);
@@ -90,6 +95,13 @@ function IssueMap({ issues, onIssueClick }) {
                   )}
                   <p className="font-bold text-sm text-gray-900 capitalize leading-tight">
                     {issue.type.replace(/_/g, ' ')}
+                  </p>
+                  <p className="text-[10px] font-semibold text-gray-500 uppercase mt-1 mb-1">
+                    {(!issue.department || issue.department === "General") ? (
+                      <span className="text-amber-600">Unassigned</span>
+                    ) : (
+                      issue.department
+                    )}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{issue.description}</p>
                   <div className="text-blue-600 text-xs font-semibold mt-2 hover:underline">

@@ -49,7 +49,11 @@ function ResultCard({ issue }) {
           <div className="px-5 py-4 grid grid-cols-3 gap-4 hover:bg-gray-50/50 transition-colors">
             <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center">Department</dt>
             <dd className="col-span-2 text-sm text-gray-900 font-medium">
-              {issue.department}
+              {(!issue.department || issue.department === "General") ? (
+                <span className="text-amber-600 italic">Unassigned</span>
+              ) : (
+                issue.department
+              )}
             </dd>
           </div>
           
