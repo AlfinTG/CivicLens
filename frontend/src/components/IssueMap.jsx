@@ -16,7 +16,13 @@ function MapBoundsController({ issues }) {
   
   useEffect(() => {
     if (issues && issues.length > 0) {
-      const validIssues = issues.filter(i => i.lat != null && i.lng != null);
+      // Filter out invalid coordinates AND coordinates outside India roughly
+      const validIssues = issues.filter(i => 
+        i.lat != null && i.lng != null && 
+        i.lat >= 6 && i.lat <= 36 && 
+        i.lng >= 68 && i.lng <= 98
+      );
+      
       if (validIssues.length > 0) {
         const lats = validIssues.map(i => i.lat);
         const lngs = validIssues.map(i => i.lng);
@@ -41,19 +47,41 @@ function MapBoundsController({ issues }) {
   return null;
 }
 
-function IssueMap({ issues }) {
+function MapResizeController() {
+  const map = useMap();
+  useEffect(() => {
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [map]);
+  return null;
+}
+
+function IssueMap({ issues, onSelectIssue }) {
   // Default to Indore if no valid issues
   const defaultCenter = [22.7196, 75.8577];
+  
+  // Approximate bounding box for India
+  const indiaBounds = [
+    [6.5, 68.1], // South-West
+    [35.6, 97.4] // North-East
+  ];
   
   return (
     <div className="h-full w-full relative z-0" style={{ minHeight: 380 }}>
       <MapContainer
         center={defaultCenter}
         zoom={14}
+        minZoom={5}
+        maxBounds={indiaBounds}
+        maxBoundsViscosity={1.0}
         className="h-full w-full z-0"
         zoomControl={true}
       >
         <MapBoundsController issues={issues} />
+        <MapResizeController />
         
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -74,25 +102,36 @@ function IssueMap({ issues }) {
               weight={1.5}
               opacity={1}
               fillOpacity={0.85}
+              eventHandlers={{
+                click: () => onSelectIssue && onSelectIssue(issue.id)
+              }}
             >
               <Popup>
-                <div className="min-w-[160px] max-w-[220px]">
+                <div 
+                  className="min-w-[160px] max-w-[220px] cursor-pointer group"
+                  onClick={() => onSelectIssue && onSelectIssue(issue.id)}
+                >
                   {issue.image_url && (
                     <img 
                       src={issue.image_url} 
                       alt="Issue" 
-                      className="w-full h-24 object-cover rounded mb-2 bg-gray-100"
+                      className="w-full h-24 object-cover rounded mb-2 bg-gray-100 group-hover:opacity-90 transition-opacity"
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   )}
-                  <p className="font-semibold text-sm text-gray-900 capitalize">
+                  <p className="font-semibold text-sm text-gray-900 capitalize group-hover:text-blue-600 transition-colors">
                     {issue.type.replace(/_/g, ' ')}
                   </p>
                   <p className="text-xs text-gray-600 mt-1 leading-relaxed">{issue.description}</p>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 pb-1">
                     <span>Sev {issue.severity}</span>
                     <span>·</span>
                     <span>{issue.department}</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-100">
+                    <span className="text-xs font-medium text-blue-600 flex items-center gap-1">
+                      View Details &rarr;
+                    </span>
                   </div>
                 </div>
               </Popup>

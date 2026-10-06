@@ -7,11 +7,11 @@ function StatsBar({ stats }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {items.map((item) => (
-        <div key={item.label} className="card px-4 py-3">
-          <p className="text-2xl font-semibold text-gray-900 tabular-nums">{item.value}</p>
-          <p className="text-xs text-gray-500 mt-0.5">{item.label}</p>
+        <div key={item.label} className="card p-4 flex flex-col justify-center shadow-sm bg-white border border-gray-200">
+          <p className="text-sm font-medium text-gray-500 mb-1">{item.label}</p>
+          <p className="text-3xl font-bold text-gray-900 tabular-nums leading-none tracking-tight">{item.value}</p>
         </div>
       ))}
     </div>

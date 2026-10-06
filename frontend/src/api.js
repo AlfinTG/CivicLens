@@ -4,7 +4,6 @@ import mockIssues from './mock/issues.json';
 const USE_MOCK = false;
 
 const http = axios.create({
-  baseURL: '',
   timeout: 15000,
 });
 

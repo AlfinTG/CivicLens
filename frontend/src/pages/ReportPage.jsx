@@ -138,10 +138,11 @@ function ReportPage() {
 
         {/* Note */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="note-input" className="block text-sm font-medium text-gray-700 mb-1.5">
             Note <span className="font-normal text-gray-400">(optional)</span>
           </label>
           <input
+            id="note-input"
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
