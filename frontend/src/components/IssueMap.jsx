@@ -79,7 +79,7 @@ function IssueMap({ issues }) {
                 <div className="min-w-[160px] max-w-[220px]">
                   {issue.image_url && (
                     <img 
-                      src={issue.image_url} 
+                      src={issue.image_url.startsWith('/uploads') ? `http://localhost:8000${issue.image_url}` : issue.image_url} 
                       alt="Issue" 
                       className="w-full h-24 object-cover rounded mb-2 bg-gray-100"
                       onError={(e) => { e.target.style.display = 'none'; }}
