@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { submitReport } from '../api';
 import ResultCard from '../components/ResultCard';
 
@@ -15,17 +16,17 @@ function ReportPage() {
 
   function fetchLocation() {
     if (!navigator.geolocation) {
-      setLocStatus('Geolocation not supported');
+      setLocStatus('location unavailable/denied');
       return;
     }
-    setLocStatus('Fetching location…');
+    setLocStatus('getting location...');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLat(pos.coords.latitude.toFixed(6));
         setLng(pos.coords.longitude.toFixed(6));
-        setLocStatus('Location acquired');
+        setLocStatus('location found');
       },
-      () => setLocStatus('Location denied — enter manually')
+      () => setLocStatus('location unavailable/denied')
     );
   }
 
@@ -53,7 +54,7 @@ function ReportPage() {
       const data = await submitReport(fd);
       setResult(data);
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Failed to submit report');
+      setError(err?.response?.data?.detail || 'Submission failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -61,7 +62,12 @@ function ReportPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
-      <h1 className="section-title mb-5">Report an Issue</h1>
+      <header className="mb-6 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-900 tracking-tight">CivicLens</h1>
+        <Link to="/admin" className="text-xs text-blue-600 hover:underline">Admin Login</Link>
+      </header>
+
+      <h2 className="section-title mb-5">Report an Issue</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Photo upload */}
@@ -157,13 +163,7 @@ function ReportPage() {
 
       {result && (
         <div className="mt-5">
-          {result.type === 'no_issue' ? (
-            <div className="card px-4 py-6 text-center">
-              <p className="text-sm text-gray-500">No infrastructure issue detected in this image.</p>
-            </div>
-          ) : (
-            <ResultCard issue={result} />
-          )}
+          <ResultCard issue={result} />
         </div>
       )}
     </div>

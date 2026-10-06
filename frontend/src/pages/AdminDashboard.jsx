@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { fetchIssues, fetchStats } from '../api';
 import StatsBar from '../components/StatsBar';
 import IssueMap from '../components/IssueMap';
@@ -28,20 +29,33 @@ function AdminDashboard() {
   }, [loadData]);
 
   return (
-    <div className="page-container space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="section-title">Dashboard</h1>
-        <span className="text-xs text-gray-400">Auto-refreshes every 10s</span>
-      </div>
-
-      {stats && <StatsBar stats={stats} />}
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-3 card overflow-hidden" style={{ minHeight: 380 }}>
-          <IssueMap issues={issues} />
+    <div className="flex flex-col min-h-screen">
+      <div className="bg-white border-b border-gray-200">
+        <div className="page-container py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-bold text-gray-900 tracking-tight">CivicLens</span>
+            <span className="text-gray-300">|</span>
+            <span className="text-sm font-medium text-gray-600">Infrastructure Dashboard</span>
+          </div>
+          <Link to="/" className="text-sm text-blue-600 hover:underline">Submit Report</Link>
         </div>
-        <div className="lg:col-span-2 card overflow-hidden">
-          <IssueTable issues={issues} onRefresh={loadData} />
+      </div>
+      
+      <div className="page-container space-y-4 flex-1">
+        <div className="flex items-center justify-between">
+          <h2 className="section-title">Overview</h2>
+          <span className="text-xs text-gray-400">Auto-refreshes every 10s</span>
+        </div>
+
+        {stats && <StatsBar stats={stats} />}
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3 card overflow-hidden" style={{ minHeight: 380 }}>
+            <IssueMap issues={issues} />
+          </div>
+          <div className="lg:col-span-2 card overflow-hidden">
+            <IssueTable issues={issues} onRefresh={loadData} />
+          </div>
         </div>
       </div>
     </div>
