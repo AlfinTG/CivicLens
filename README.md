@@ -8,6 +8,10 @@ Citizens upload a photo of a civic issue (pothole, broken streetlight, drain ove
 
 ## Quick Start
 
+### Prerequisites
+- Node.js v18+
+- Python 3.11+
+
 ### Backend
 
 ```bash
@@ -41,6 +45,8 @@ cd frontend
 npm install
 npm run dev
 ```
+
+Navigate to `http://localhost:5173` for the report page and `http://localhost:5173/admin` for the dashboard.
 
 ## API endpoints
 

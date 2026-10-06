@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 text-sm;
+    overflow-x: hidden;
+  }
+
+  *:focus-visible {
+    @apply outline-2 outline-offset-1 outline-blue-600;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md
+           placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+           disabled:bg-gray-100 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium
+           text-white bg-blue-600 border border-transparent rounded-md
+           hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium
+           text-gray-700 bg-white border border-gray-300 rounded-md
+           hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+           transition-colors;
+  }
+
+  .card {
+    @apply bg-white border border-gray-200 rounded-md;
+  }
+
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-gray-900;
+  }
+}
+
+/* Leaflet overrides — prevent Tailwind reset from breaking map controls */
+.leaflet-container {
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+.leaflet-popup-content {
+  margin: 10px 12px;
+  line-height: 1.5;
+}
