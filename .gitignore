@@ -16,10 +16,12 @@ venv/
 # Uploads (user photos)
 backend/uploads/*
 !backend/uploads/.gitkeep
+uploads/
 
 # Node
 node_modules/
 dist/
+.vite/
 
 # OS
 .DS_Store
