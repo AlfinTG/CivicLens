@@ -13,7 +13,7 @@ app = FastAPI(title="CivicLens API", version="1.0.0")
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_ORIGIN],
+    allow_origins=[origin.strip() for origin in FRONTEND_ORIGIN.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
