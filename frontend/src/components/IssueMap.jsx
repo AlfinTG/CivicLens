@@ -3,11 +3,11 @@ import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaf
 import 'leaflet/dist/leaflet.css';
 
 const SEVERITY_COLORS = {
-  1: '#16a34a', // green
-  2: '#16a34a', // green
-  3: '#d97706', // amber
-  4: '#dc2626', // red
-  5: '#dc2626', // red
+  1: '#22c55e', // green
+  2: '#22c55e', // green
+  3: '#f59e0b', // amber
+  4: '#ef4444', // red
+  5: '#ef4444', // red
 };
 
 // Component to handle dynamic map bounds when issues change
@@ -41,7 +41,7 @@ function MapBoundsController({ issues }) {
   return null;
 }
 
-function IssueMap({ issues }) {
+function IssueMap({ issues, onIssueClick }) {
   // Default to Indore if no valid issues
   const defaultCenter = [22.7196, 75.8577];
   
@@ -63,36 +63,37 @@ function IssueMap({ issues }) {
         {issues?.map((issue) => {
           if (issue.lat == null || issue.lng == null) return null;
           
-          const color = SEVERITY_COLORS[issue.severity] || '#6b7280';
+          const color = SEVERITY_COLORS[issue.severity] || '#9ca3af';
           return (
             <CircleMarker
               key={issue.id}
               center={[issue.lat, issue.lng]}
-              radius={7}
+              radius={8}
               fillColor={color}
               color="#fff"
-              weight={1.5}
+              weight={2}
               opacity={1}
-              fillOpacity={0.85}
+              fillOpacity={0.9}
+              eventHandlers={{
+                click: () => onIssueClick && onIssueClick(issue)
+              }}
             >
-              <Popup>
-                <div className="min-w-[160px] max-w-[220px]">
+              <Popup closeButton={false}>
+                <div className="min-w-[160px] max-w-[220px] cursor-pointer" onClick={() => onIssueClick && onIssueClick(issue)}>
                   {issue.image_url && (
                     <img 
                       src={issue.image_url} 
                       alt="Issue" 
-                      className="w-full h-24 object-cover rounded mb-2 bg-gray-100"
+                      className="w-full h-28 object-cover rounded mb-2 bg-gray-100 block"
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   )}
-                  <p className="font-semibold text-sm text-gray-900 capitalize">
+                  <p className="font-bold text-sm text-gray-900 capitalize leading-tight">
                     {issue.type.replace(/_/g, ' ')}
                   </p>
-                  <p className="text-xs text-gray-600 mt-1 leading-relaxed">{issue.description}</p>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                    <span>Sev {issue.severity}</span>
-                    <span>·</span>
-                    <span>{issue.department}</span>
+                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{issue.description}</p>
+                  <div className="text-blue-600 text-xs font-semibold mt-2 hover:underline">
+                    View Details &rarr;
                   </div>
                 </div>
               </Popup>
