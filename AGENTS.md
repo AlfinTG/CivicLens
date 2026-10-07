@@ -1,6 +1,18 @@
 # AGENTS.md — CivicLens
 
 > Read this fully before writing any code. This is the source of truth.
+>
+> **Current direction (owner brief, October 2026):** CivicLens is transitioning
+> from a Hacktoberfest demo into a production civic issue reporting and
+> resolution platform. The hackathon timeline, “no auth,” SQLite-only rule,
+> frozen demo API contract, fixed issue states/priority formula, and “do not add
+> features” restrictions in the historical sections below are superseded by
+> the owner's current production brief. Preserve working behavior while
+> migrating it safely; humans remain accountable for triage and closure.
+> Production uses PostgreSQL and Alembic; SQLite is for local development only.
+> Implement as a modular monolith, keep secrets out of source, and test each
+> phase before calling it complete. Do not claim deployment or provider
+> integration until it has been configured and verified.
 
 ## 1. What we're building
 
