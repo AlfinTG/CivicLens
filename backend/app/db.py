@@ -1,12 +1,22 @@
 from sqlalchemy import create_engine
+from sqlalchemy import event
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 from app.config import DATABASE_URL
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
+engine_options = {"pool_pre_ping": True}
+if DATABASE_URL.startswith("sqlite"):
+    engine_options["connect_args"] = {"check_same_thread": False, "timeout": 30}
+
+engine = create_engine(DATABASE_URL, **engine_options)
+
+if DATABASE_URL.startswith("sqlite"):
+    @event.listens_for(engine, "connect")
+    def configure_sqlite(dbapi_connection, _connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -21,8 +31,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-def create_tables():
-    from app import models  # noqa: F401 — import so SQLAlchemy sees the model
-    Base.metadata.create_all(bind=engine)

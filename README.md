@@ -24,9 +24,12 @@ source venv/bin/activate
 
 pip install -r requirements.txt
 
-# Copy env template and add your Gemini API key
+# Copy the environment template. Add secrets only to your local .env file.
 copy .env.example .env    # Windows
 # cp .env.example .env    # Mac/Linux
+
+# Apply versioned database migrations before starting the API.
+alembic upgrade head
 
 uvicorn app.main:app --reload --port 8000
 ```
@@ -37,6 +40,17 @@ uvicorn app.main:app --reload --port 8000
 # from backend/ folder, with venv active:
 python seed/seed.py
 ```
+
+The default local database is SQLite for development. Production must set
+`APP_ENV=production`, an HTTPS `FRONTEND_ORIGIN`, and a PostgreSQL
+`DATABASE_URL` (the `postgresql://` and `postgres://` URL forms are normalized
+to the psycopg 3 driver). Database tables are managed only through Alembic;
+the API no longer creates or mutates schema at startup.
+
+The initial migration recognizes the repository's legacy `issues` table,
+preserves its rows, and adds indexes. Back up an existing database before
+migrating it. For production, first rehearse the migration against a restored
+backup and verify row counts and representative records before cutover.
 
 ### Frontend
 
