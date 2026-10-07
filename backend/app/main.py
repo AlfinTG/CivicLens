@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import FRONTEND_ORIGIN
-from app.db import create_tables
 from app.routes import reports, issues, auth
 
 app = FastAPI(title="CivicLens API", version="1.0.0")
@@ -28,8 +27,3 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 app.include_router(reports.router)
 app.include_router(issues.router)
 app.include_router(auth.router)
-
-
-@app.on_event("startup")
-def on_startup():
-    create_tables()

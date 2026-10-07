@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.db import SessionLocal, create_tables
+from app.db import SessionLocal
 from app.models import Issue
 from app.services.priority import calculate_priority
 
@@ -150,7 +150,6 @@ DEMO_ISSUES = [
 
 
 def main():
-    create_tables()
     db = SessionLocal()
     try:
         existing = db.query(Issue).count()
