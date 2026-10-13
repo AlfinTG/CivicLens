@@ -6,12 +6,12 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Issue
-from app.schemas import IssueOut, StatusPatch, StatsOut
+from app.schemas import IssueOut, IssuePatch, StatsOut
 from app.routes.auth import require_admin
 
 router = APIRouter()
 
-VALID_STATUSES = {"open", "in_progress", "resolved"}
+VALID_STATUSES = {"open", "assigned", "in_progress", "resolved"}
 
 
 @router.get("/api/health")
@@ -64,14 +64,30 @@ def get_issue(issue_id: int, db: Session = Depends(get_db), _=Depends(require_ad
     return issue
 
 
+VALID_DEPARTMENTS = {
+    "Roads & Public Works",
+    "Electricity Board",
+    "Water & Drainage",
+    "Sanitation",
+    "General",
+}
+
+
 @router.patch("/api/issues/{issue_id}", response_model=IssueOut)
-def update_status(issue_id: int, body: StatusPatch, db: Session = Depends(get_db), _=Depends(require_admin)):
-    if body.status not in VALID_STATUSES:
+def update_issue(issue_id: int, body: IssuePatch, db: Session = Depends(get_db), _=Depends(require_admin)):
+    if body.status is None and body.department is None:
+        raise HTTPException(status_code=400, detail="Provide at least one field to update (status or department).")
+    if body.status is not None and body.status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail=f"Invalid status. Use: {', '.join(VALID_STATUSES)}")
+    if body.department is not None and body.department not in VALID_DEPARTMENTS:
+        raise HTTPException(status_code=400, detail=f"Invalid department. Use: {', '.join(VALID_DEPARTMENTS)}")
     issue = db.query(Issue).filter(Issue.id == issue_id).first()
     if not issue:
         raise HTTPException(status_code=404, detail="Issue not found")
-    issue.status = body.status
+    if body.status is not None:
+        issue.status = body.status
+    if body.department is not None:
+        issue.department = body.department
     db.commit()
     db.refresh(issue)
     return issue

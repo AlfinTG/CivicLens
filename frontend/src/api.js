@@ -49,13 +49,16 @@ export async function fetchIssue(id) {
   return res.data;
 }
 
-export async function updateIssueStatus(id, status) {
+export async function updateIssue(id, updates) {
   if (USE_MOCK) {
     const issue = mockIssues.find((i) => i.id === id);
-    if (issue) issue.status = status;
+    if (issue) {
+      if (updates.status !== undefined) issue.status = updates.status;
+      if (updates.department !== undefined) issue.department = updates.department;
+    }
     return issue;
   }
-  const res = await http.patch(`/api/issues/${id}`, { status });
+  const res = await http.patch(`/api/issues/${id}`, updates);
   return res.data;
 }
 

@@ -28,8 +28,9 @@ class IssueOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class StatusPatch(BaseModel):
-    status: str
+class IssuePatch(BaseModel):
+    status: str | None = None
+    department: str | None = None
 
 
 class StatsOut(BaseModel):

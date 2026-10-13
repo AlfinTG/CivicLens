@@ -10,63 +10,88 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 text-sm;
+    @apply bg-surface text-on-surface text-sm;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     overflow-x: hidden;
   }
 
   *:focus-visible {
-    @apply outline-2 outline-offset-1 outline-blue-600;
+    @apply outline-2 outline-offset-1 outline-primary;
   }
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
 }
 
 @layer components {
   .input-field {
-    @apply w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md
-           placeholder-gray-400
-           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-           disabled:bg-gray-100 disabled:cursor-not-allowed;
+    @apply w-full px-3.5 py-2.5 text-sm bg-surface-container-lowest border border-outline-variant/50 rounded-lg
+           text-on-surface placeholder:text-secondary/70
+           focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
+           disabled:bg-surface-container-low disabled:cursor-not-allowed
+           transition-all shadow-xs;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium
-           text-white bg-blue-600 border border-transparent rounded-md
-           hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-           disabled:opacity-50 disabled:cursor-not-allowed
-           transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold
+           text-on-primary bg-primary rounded-lg
+           hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+           shadow-xs hover:shadow transition-all
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium
-           text-gray-700 bg-white border border-gray-300 rounded-md
-           hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-           transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium
+           text-on-surface bg-surface-container-lowest border border-outline-variant/40 rounded-lg
+           hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary
+           shadow-xs transition-all;
   }
 
   .card {
-    @apply bg-white border border-gray-200 rounded-md;
+    @apply bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-xs;
   }
 
-  .page-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5;
-  }
-
-  .section-title {
-    @apply text-lg font-semibold text-gray-900;
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold;
   }
 }
 
-/* Leaflet overrides — prevent Tailwind reset from breaking map controls */
+/* Leaflet overrides */
 .leaflet-container {
-  font-family: inherit;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   font-size: 0.875rem;
+  border-radius: 0.75rem;
 }
 
 .leaflet-popup-content-wrapper {
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  background-color: #ffffff;
+  color: #0b1c30;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.12), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(188, 202, 192, 0.4);
+  padding: 0;
 }
 
 .leaflet-popup-content {
-  margin: 10px 12px;
-  line-height: 1.5;
+  margin: 12px 14px;
+  line-height: 1.4;
+}
+
+.leaflet-popup-tip {
+  background: #ffffff;
 }
